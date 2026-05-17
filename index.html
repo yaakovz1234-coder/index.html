@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>האתר המשולב שלי</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            text-align: center;
+            margin: 0;
+            padding: 10px;
+        }
+        .search-section {
+            background-color: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        h1 { color: #4285F4; margin-bottom: 10px; }
+        
+        /* עיצוב המשחק */
+        .game-section {
+            background-color: #222;
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            display: inline-block;
+        }
+        canvas {
+            background-color: #111;
+            border: 3px solid #4CAF50;
+            border-radius: 10px;
+            display: block;
+            margin: 0 auto;
+        }
+        .controls {
+            margin-top: 15px;
+            display: grid;
+            grid-template-columns: repeat(3, 60px);
+            grid-template-rows: repeat(2, 60px);
+            gap: 10px;
+            justify-content: center;
+        }
+        .btn {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            font-size: 20px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .btn:active { background-color: #45a049; transform: scale(0.9); }
+        .up { grid-column: 2; }
+        .left { grid-column: 1; grid-row: 2; }
+        .down { grid-column: 2; grid-row: 2; }
+        .right { grid-column: 3; grid-row: 2; }
+        #score { font-size: 18px; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+
+    <div class="search-section">
+        <h1>חיפוש כשר 🔎</h1>
+        <script async src="https://cse.google.com/cse.js?cx=c2911777185354528"></script>
+        <div class="gcse-search"></div>
+    </div>
+
+    <div class="game-section">
+        <h2>הפסקת משחק 🐍</h2>
+        <div id="score">ניקוד: 0</div>
+        <canvas id="gameCanvas" width="280" height="280"></canvas>
+        
+        <div class="controls">
+            <button class="btn up" onclick="changeDirection('UP')">▲</button>
+            <button class="btn left" onclick="changeDirection('LEFT')">◀</button>
+            <button class="btn down" onclick="changeDirection('DOWN')">▼</button>
+            <button class="btn right" onclick="changeDirection('RIGHT')">▶</button>
+        </div>
+    </div>
+
+    <script>
+        // קוד המשחק
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+        const scoreElement = document.getElementById("score");
+        const box = 14;
+        let snake = [{ x: 10 * box, y: 10 * box }];
+        let food = { x: Math.floor(Math.random() * 20) * box, y: Math.floor(Math.random() * 20) * box };
+        let d = "RIGHT";
+        let score = 0;
+
+        function changeDirection(direction) {
+            if (direction === "LEFT" && d !== "RIGHT") d = "LEFT";
+            if (direction === "UP" && d !== "DOWN") d = "UP";
+            if (direction === "RIGHT" && d !== "LEFT") d = "RIGHT";
+            if (direction === "DOWN" && d !== "UP") d = "DOWN";
+        }
+
+        function draw() {
+            ctx.fillStyle = "#111";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            for (let i = 0; i < snake.length; i++) {
+                ctx.fillStyle = i === 0 ? "#4CAF50" : "#81C784";
+                ctx.fillRect(snake[i].x, snake[i].y, box, box);
+                ctx.strokeRect(snake[i].x, snake[i].y, box, box);
+            }
+            ctx.fillStyle = "red";
+            ctx.fillRect(food.x, food.y, box, box);
+            let snakeX = snake[0].x;
+            let snakeY = snake[0].y;
+            if (d === "LEFT") snakeX -= box;
+            if (d === "UP") snakeY -= box;
+            if (d === "RIGHT") snakeX += box;
+            if (d === "DOWN") snakeY += box;
+            if (snakeX === food.x && snakeY === food.y) {
+                score++;
+                scoreElement.innerText = "ניקוד: " + score;
+                food = { x: Math.floor(Math.random() * 20) * box, y: Math.floor(Math.random() * 20) * box };
+            } else { snake.pop(); }
+            let newHead = { x: snakeX, y: snakeY };
+            if (snakeX < 0 || snakeX >= canvas.width || snakeY < 0 || snakeY >= canvas.height || collision(newHead, snake)) {
+                clearInterval(game);
+                alert("המשחק נגמר!");
+                location.reload();
+            }
+            snake.unshift(newHead);
+        }
+        function collision(head, array) {
+            for (let i = 0; i < array.length; i++) { if (head.x === array[i].x && head.y === array[i].y) return true; }
+            return false;
+        }
+        let game = setInterval(draw, 150);
+    </script>
+
+</body>
+</html>
+
