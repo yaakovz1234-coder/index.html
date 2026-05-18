@@ -1,73 +1,184 @@
-<!DOCTYPE html>
-<html lang="he" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>תפילון כשר</title>
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f4f6f9;
-            color: #333;
-            margin: 0;
-            padding: 0;
-            direction: rtl;
-        }
-        /* סרגל עליון */
-        .header {
-            background-color: #3a506b;
-            color: white;
-            padding: 20px;
-            text-align: center;
-            font-size: 24px;
-            font-weight: bold;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-        }
-        /* תפריט כפתורי תפילה */
-        .nav-menu {
-            display: flex;
-            justify-content: center;
-            flex-wrap: wrap;
-            gap: 10px;
-            padding: 15px;
-            background-color: #ffffff;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        }
-        .nav-btn {
-            background-color: #5bc0be;
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            font-size: 16px;
-            font-weight: bold;
-            border-radius: 25px;
-            cursor: pointer;
-            transition: all 0.2s;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .nav-btn:active {
-            transform: scale(0.95);
-            background-color: #3a506b;
-        }
-        /* אזור הצגת התפילה */
-        .prayer-container {
-            max-width: 600px;
-            margin: 20px auto;
-            background-color: white;
-            padding: 25px;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-            min-height: 300px;
-        }
-        .prayer-title {
-            color: #3a506b;
-            border-bottom: 2px solid #5bc0be;
-            padding-bottom: 10px;
-            margin-top: 0;
-            font-size: 22px;
-        }
-        .prayer-text {
-            font-size: 20px;
-            line-height: 1.8;
-            white-space: pre-line; /* שומר על ירידת שורות מהקוד */
-            text-align: justify
+import 'package:flutter/material.dart';
+
+void main() {
+  runApp(const CarMaintenanceApp());
+}
+
+// ----------------------------------------------------
+// 1. שכבת הנתונים (המודל) - נמצאת כאן כדי למנוע שגיאות ייבוא
+// ----------------------------------------------------
+class ServiceRecord {
+  final String id;
+  final String title;       // סוג הטיפול
+  final int mileage;        // קילומטראז'
+  final double cost;        // עלות
+  final DateTime date;      // תאריך
+  final String notes;       // הערות
+
+  ServiceRecord({
+    required this.id,
+    required this.title,
+    required this.mileage,
+    required this.cost,
+    required this.date,
+    this.notes = '',
+  });
+}
+
+// ----------------------------------------------------
+// 2. הגדרת האפליקציה הראשית
+// ----------------------------------------------------
+class CarMaintenanceApp extends StatelessWidget {
+  const CarMaintenanceApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      title: 'ספר רכב דיגיטלי',
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+        useMaterial3: true,
+      ),
+      // הגדרת תמיכה בעברית וביישור לימין
+      localizationsDelegates: const [
+        DefaultMaterialLocalizations.delegate,
+        DefaultWidgetsLocalizations.delegate,
+      ],
+      supportedLocales: const [
+        Locale('he', 'IL'),
+      ],
+      home: const HomeScreen(),
+    );
+  }
+}
+
+// ----------------------------------------------------
+// 3. מסך הבית - רשימת הטיפולים
+// ----------------------------------------------------
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  // רשימת הטיפולים ההתחלתית (ה-State)
+  final List<ServiceRecord> _services = [
+    ServiceRecord(
+      id: '1',
+      title: 'טיפול 10,000 קלאסי',
+      mileage: 142000,
+      cost: 450.0,
+      date: DateTime.now().subtract(const Duration(days: 30)),
+      notes: 'החלפת שמן מנוע ומסנן שמן',
+    ),
+  ];
+
+  // פונקציה להוספת טיפול חדש
+  void _addNewService(String title, int mileage, double cost, String notes) {
+    final newService = ServiceRecord(
+      id: DateTime.now().toString(),
+      title: title,
+      mileage: mileage,
+      cost: cost,
+      date: DateTime.now(),
+      notes: notes,
+    );
+
+    setState(() {
+      _services.add(newService);
+    });
+  }
+
+  // פתיחת חלון תחתון (פופ-אפ) להזנת טיפול חדש
+  void _startAddNewService(BuildContext ctx) {
+    showModalBottomSheet(
+      context: ctx,
+      isScrollControlled: true, // גורם לחלון לעלות מעל המקלדת
+      builder: (_) {
+        return NewServiceForm(addService: _addNewService);
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Directionality(
+      textDirection: TextDirection.rtl, // כיוון כתיבה מימין לשמאל
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('ספר הטיפולים שלי'),
+          backgroundColor: Colors.blueAccent,
+          foregroundColor: Colors.white,
+        ),
+        body: _services.isEmpty
+            ? const Center(child: Text('אין עדיין טיפולים מתועדים.'))
+            : ListView.builder(
+                itemCount: _services.length,
+                itemBuilder: (ctx, index) {
+                  final service = _services[index];
+                  return Card(
+                    margin: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+                    elevation: 3,
+                    child: ListTile(
+                      leading: CircleAvatar(
+                        backgroundColor: Colors.blue.shade50,
+                        child: const Icon(Icons.build, color: Colors.blueAccent),
+                      ),
+                      title: Text(service.title, style: const TextStyle(fontWeight: FontWeight.bold)),
+                      subtitle: Text('${service.mileage} ק"מ | ${service.notes}'),
+                      trailing: Text(
+                        '₪${service.cost.toStringAsFixed(0)}',
+                        style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 16),
+                      ),
+                    ),
+                  );
+                },
+              ),
+        floatingActionButton: FloatingActionButton(
+          onPressed: () => _startAddNewService(context),
+          backgroundColor: Colors.blueAccent,
+          child: const Icon(Icons.add, color: Colors.white),
+        ),
+      ),
+    );
+  }
+}
+
+// ----------------------------------------------------
+// 4. טופס הוספת טיפול חדש (כולל בדיקות תקינות קלט)
+// ----------------------------------------------------
+class NewServiceForm extends StatefulWidget {
+  final Function(String, int, double, String) addService;
+
+  const NewServiceForm({required this.addService, super.key});
+
+  @override
+  State<NewServiceForm> createState() => _NewServiceFormState();
+}
+
+class _NewServiceFormState extends State<NewServiceForm> {
+  final _formKey = GlobalKey<FormState>();
+  final _titleController = TextEditingController();
+  final _mileageController = TextEditingController();
+  final _costController = TextEditingController();
+  final _notesController = TextEditingController();
+
+  void _submitData() {
+    // בדיקה שכל השדות מולאו כראוי לפני השמירה
+    if (_formKey.currentState!.validate()) {
+      widget.addService(
+        _titleController.text,
+        int.parse(_mileageController.text),
+        double.parse(_costController.text),
+        _notesController.text,
+      );
+      Navigator.of(context).pop(); // סוגר את החלון התחתון
+    }
+  }
+
+  @override
+  void dispose() {
+    // ניקוי הקונטרולרים מה
